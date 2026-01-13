@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Devialet Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #1c1c1e;
+            --bg-tertiary: #2c2c2e;
+            --label-primary: #ffffff;
+            --label-secondary: #ebebf5;
+            --label-tertiary: #ebebf599;
+            --separator: #38383a;
+            --fill-tertiary: #7878801f;
+            --fill-secondary: #78788033;
+            --system-green: #30d158;
+            --system-red: #ff453a;
+            --system-blue: #0a84ff;
+            --system-gray: #8e8e93;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--label-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .container {
+            max-width: 428px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        /* Header */
+        header {
+            padding: 20px 20px 12px;
+        }
+
+        h1 {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 0.37px;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: var(--label-tertiary);
+            font-weight: 400;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--system-green);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--system-green);
+        }
+
+        /* Sections */
+        .section {
+            margin: 20px 0;
+        }
+
+        .section-header {
+            padding: 8px 20px;
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--label-tertiary);
+            letter-spacing: -0.08px;
+            font-weight: 400;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            margin: 0 16px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 16px;
+        }
+
+        .card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Power Button */
+        .power-section {
+            padding: 0 16px;
+        }
+
+        .power-button {
+            width: 100%;
+            background: var(--system-red);
+            border: none;
+            border-radius: 14px;
+            padding: 18px;
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: -0.41px;
+        }
+
+        .power-button.on {
+            background: var(--system-green);
+        }
+
+        .power-button:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* Volume Control */
+        .volume-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .volume-label {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.41px;
+        }
+
+        .volume-value-large {
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .volume-unit {
+            font-size: 17px;
+            color: var(--label-secondary);
+            margin-left: 4px;
+            font-weight: 400;
+        }
+
+        /* Slider */
+        .slider-container {
+            position: relative;
+            padding: 12px 0;
+            margin: 24px 0;
+        }
+
+        .slider-reference {
+            width: 2px;
+            height: 16px;
+            background: var(--system-green);
+            position: absolute;
+            left: 66.67%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            background: linear-gradient(to right, var(--system-blue) 0%, var(--system-blue) var(--slider-value, 67%), var(--fill-tertiary) var(--slider-value, 67%), var(--fill-tertiary) 100%);
+            outline: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3), 0 0 1px rgba(0, 0, 0, 0.5);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--label-tertiary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Control buttons */
+        .control-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .control-button {
+            flex: 1;
+            background: var(--fill-tertiary);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--label-primary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: -0.24px;
+        }
+
+        .control-button.small {
+            flex: 0.6;
+            font-size: 13px;
+        }
+
+        .control-button:active {
+            background: var(--fill-secondary);
+            transform: scale(0.97);
+        }
+
+        .control-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .control-button.mute {
+            background: var(--system-red);
+            color: white;
+        }
+
+        .control-button.mute.unmute {
+            background: var(--fill-tertiary);
+            color: var(--label-primary);
+        }
+
+        .control-button.mute:active {
+            opacity: 0.8;
+        }
+
+        /* Separator */
+        .separator {
+            height: 0.5px;
+            background: var(--separator);
+            margin: 0 -16px;
+        }
+
+        /* Input selector */
+        .input-section .card-content {
+            padding: 4px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s ease;
+            border-radius: 10px;
+            color: var(--label-primary);
+            font-size: 17px;
+            letter-spacing: -0.41px;
+            text-align: left;
+        }
+
+        .list-item:active {
+            background: var(--fill-tertiary);
+        }
+
+        .list-item-label {
+            font-weight: 400;
+        }
+
+        .list-item-value {
+            color: var(--label-tertiary);
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chevron {
+            color: var(--system-gray);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--label-tertiary);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--system-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error state */
+        .error {
+            background: rgba(255, 69, 58, 0.15);
+            border: 1px solid var(--system-red);
+            color: var(--system-red);
+            padding: 16px;
+            border-radius: 14px;
+            margin: 0 16px 20px;
+            font-size: 15px;
+            letter-spacing: -0.24px;
+        }
+
+        /* Action Sheet */
+        .action-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .action-sheet-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .action-sheet {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-secondary);
+            border-radius: 14px 14px 0 0;
+            z-index: 1001;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-bottom: env(safe-area-inset-bottom);
+            max-width: 428px;
+            margin: 0 auto;
+        }
+
+        .action-sheet.show {
+            transform: translateY(0);
+        }
+
+        .action-sheet-header {
+            padding: 16px 20px 8px;
+            text-align: center;
+            border-bottom: 0.5px solid var(--separator);
+        }
+
+        .action-sheet-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--label-tertiary);
+            text-transform: uppercase;
+            letter-spacing: -0.08px;
+        }
+
+        .action-sheet-list {
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .action-sheet-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            border-bottom: 0.5px solid var(--separator);
+            font-size: 17px;
+            letter-spacing: -0.41px;
+            color: var(--label-primary);
+            text-align: left;
+        }
+
+        .action-sheet-item:active {
+            background: var(--fill-tertiary);
+        }
+
+        .action-sheet-item:last-child {
+            border-bottom: none;
+        }
+
+        .action-sheet-item.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .action-sheet-item.disabled:active {
+            background: transparent;
+        }
+
+        .action-sheet-item.selected {
+            color: var(--system-blue);
+        }
+
+        .action-sheet-item .checkmark {
+            font-size: 20px;
+            font-weight: 600;
+            opacity: 0;
+        }
+
+        .action-sheet-item.selected .checkmark {
+            opacity: 1;
+        }
+
+        .action-sheet-cancel {
+            margin: 8px 16px 16px;
+        }
+
+        .action-sheet-cancel-button {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--system-blue);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: -0.41px;
+        }
+
+        .action-sheet-cancel-button:active {
+            opacity: 0.6;
+        }
+
+        /* Light mode */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #f2f2f7;
+                --bg-secondary: #ffffff;
+                --bg-tertiary: #ffffff;
+                --label-primary: #000000;
+                --label-secondary: #3c3c43;
+                --label-tertiary: #3c3c4399;
+                --separator: #3c3c4329;
+                --fill-tertiary: #7878801f;
+                --fill-secondary: #78788033;
+                --system-green: #34c759;
+                --system-red: #ff3b30;
+                --system-blue: #007aff;
+                --system-gray: #8e8e93;
+            }
+
+            input[type="range"] {
+                background: linear-gradient(to right, var(--system-blue) 0%, var(--system-blue) var(--slider-value, 67%), var(--fill-tertiary) var(--slider-value, 67%), var(--fill-tertiary) 100%);
+            }
+
+            .action-sheet-overlay {
+                background: rgba(0, 0, 0, 0.25);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Error container -->
+        <div id="errorContainer"></div>
+
+        <!-- Loading state -->
+        <div id="loadingContainer" class="loading">
+            <div class="spinner"></div>
+            <p>Connecting to amplifier...</p>
+        </div>
+
+        <!-- Main content -->
+        <div id="mainContent" style="display: none;">
+            <!-- Header -->
+            <header>
+                <h1>Devialet</h1>
+                <div class="subtitle">
+                    <span class="status-indicator"></span>
+                    <span id="deviceName">My Devialet</span>
+                </div>
+            </header>
+
+            <!-- Power Section -->
+            <section class="section power-section">
+                <button onclick="togglePower()" id="powerButton" class="power-button">Power</button>
+            </section>
+
+            <!-- Volume Section -->
+            <section class="section">
+                <div class="section-header">Volume</div>
+                <div class="card" id="volumeCard">
+                    <div class="card-content">
+                        <div class="volume-header">
+                            <div class="volume-label">Level</div>
+                            <div>
+                                <span class="volume-value-large" id="volumeValue">-20.0</span>
+                                <span class="volume-unit">dB</span>
+                            </div>
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-reference"></div>
+                            <input type="range" id="volumeSlider" min="-60" max="0" step="0.5" value="-20" oninput="handleVolumeInput()" onchange="setVolume()">
+                            <div class="slider-labels">
+                                <span>-60</span>
+                                <span>-45</span>
+                                <span>-30</span>
+                                <span>-15</span>
+                                <span>0</span>
+                            </div>
+                        </div>
+
+                        <div class="control-row">
+                            <button onclick="decreaseVolume()" class="control-button">◀︎</button>
+                            <button onclick="setVolumeToReference()" class="control-button small">-20</button>
+                            <button onclick="increaseVolume()" class="control-button">▶︎</button>
+                        </div>
+
+                        <div class="separator" style="margin: 16px -16px;"></div>
+
+                        <div class="control-row" style="margin-top: 20px;">
+                            <button onclick="toggleMute()" id="muteButton" class="control-button mute">Mute</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Input Section -->
+            <section class="section input-section">
+                <div class="section-header">Input</div>
+                <div class="card" id="inputCard">
+                    <div class="card-content">
+                        <button class="list-item" onclick="openInputSelector()">
+                            <span class="list-item-label">Source</span>
+                            <span class="list-item-value">
+                                <span id="currentInput">Optical 1</span>
+                                <span class="chevron">›</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Input Selector Action Sheet -->
+    <div class="action-sheet-overlay" id="inputSelectorOverlay" onclick="closeInputSelector()"></div>
+    <div class="action-sheet" id="inputSelectorSheet">
+        <div class="action-sheet-header">
+            <div class="action-sheet-title">Select Input</div>
+        </div>
+        <div class="action-sheet-list" id="inputSelectorList">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="action-sheet-cancel">
+            <button class="action-sheet-cancel-button" onclick="closeInputSelector()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStatus = null;
+        let updateInterval = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus();
+            // Auto-refresh every 1 second for more responsive updates
+            updateInterval = setInterval(updateStatus, 1000);
+        });
+
+        // Fetch and update status
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const result = await response.json();
+
+                if (result.success) {
+                    currentStatus = result.data;
+                    updateUI(currentStatus);
+                    hideError();
+                    document.getElementById('loadingContainer').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                }
+                // Silently ignore API errors - don't show to user
+            } catch (error) {
+                // Only show connection errors
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Update UI with current status
+        function updateUI(status) {
+            // Device name
+            document.getElementById('deviceName').textContent = status.device_name || 'Unknown Device';
+
+            // Power button
+            const powerButton = document.getElementById('powerButton');
+            if (status.power) {
+                powerButton.className = 'power-button on';
+            } else {
+                powerButton.className = 'power-button off';
+            }
+
+            // Enable/disable volume and input cards based on power state
+            const volumeCard = document.getElementById('volumeCard');
+            const inputCard = document.getElementById('inputCard');
+            if (status.power) {
+                volumeCard.classList.remove('disabled');
+                inputCard.classList.remove('disabled');
+            } else {
+                volumeCard.classList.add('disabled');
+                inputCard.classList.add('disabled');
+            }
+
+            // Volume display and slider
+            const volumeDb = status.volume_db !== null ? status.volume_db.toFixed(1) : '—';
+            document.getElementById('volumeValue').textContent = volumeDb;
+
+            // Clamp volume to slider range (-60 to 0)
+            let sliderValue = status.volume_db || -20;
+            if (sliderValue < -60) sliderValue = -60;
+            if (sliderValue > 0) sliderValue = 0;
+            document.getElementById('volumeSlider').value = sliderValue;
+
+            // Update slider fill
+            updateSliderFill(sliderValue);
+
+            // Mute button
+            const muteButton = document.getElementById('muteButton');
+            if (status.muted) {
+                muteButton.textContent = 'Unmute';
+                muteButton.className = 'control-button mute unmute';
+            } else {
+                muteButton.textContent = 'Mute';
+                muteButton.className = 'control-button mute';
+            }
+
+            // Current input display
+            const currentChannelName = status.channels[status.channel]?.name || 'Unknown';
+            document.getElementById('currentInput').textContent = status.power ? currentChannelName : '—';
+
+            // Populate input selector action sheet
+            updateInputSelector(status.channels, status.channel, status.power);
+        }
+
+        // Update slider fill percentage
+        function updateSliderFill(value) {
+            const percent = ((value - (-60)) / (0 - (-60))) * 100;
+            const slider = document.getElementById('volumeSlider');
+            slider.style.setProperty('--slider-value', percent + '%');
+        }
+
+        // Update input selector action sheet
+        function updateInputSelector(channels, currentChannel, isPowerOn) {
+            const list = document.getElementById('inputSelectorList');
+
+            // Clear existing items
+            list.innerHTML = '';
+
+            if (!isPowerOn) {
+                return;
+            }
+
+            // Sort channels by number
+            const sortedChannels = Object.entries(channels).sort((a, b) => a[0] - b[0]);
+
+            sortedChannels.forEach(([channelNum, channelInfo]) => {
+                const button = document.createElement('button');
+                button.className = 'action-sheet-item';
+
+                const label = document.createElement('span');
+                label.textContent = channelInfo.name;
+
+                const checkmark = document.createElement('span');
+                checkmark.className = 'checkmark';
+                checkmark.textContent = '✓';
+
+                button.appendChild(label);
+                button.appendChild(checkmark);
+
+                if (parseInt(channelNum) === currentChannel) {
+                    button.classList.add('selected');
+                }
+
+                if (!channelInfo.accessible) {
+                    button.classList.add('disabled');
+                    label.textContent += ' (not accessible)';
+                } else {
+                    button.onclick = () => selectInput(parseInt(channelNum));
+                }
+
+                list.appendChild(button);
+            });
+        }
+
+        // Open input selector action sheet
+        function openInputSelector() {
+            if (currentStatus && currentStatus.power) {
+                document.getElementById('inputSelectorOverlay').classList.add('show');
+                document.getElementById('inputSelectorSheet').classList.add('show');
+            }
+        }
+
+        // Close input selector action sheet
+        function closeInputSelector() {
+            document.getElementById('inputSelectorOverlay').classList.remove('show');
+            document.getElementById('inputSelectorSheet').classList.remove('show');
+        }
+
+        // Select input from action sheet
+        function selectInput(channel) {
+            closeInputSelector();
+            setChannel(channel);
+        }
+
+        // Handle volume slider input with sticky behavior at -20 dB
+        function handleVolumeInput() {
+            const slider = document.getElementById('volumeSlider');
+            let value = parseFloat(slider.value);
+
+            // Sticky behavior: snap to -20 if within 1.5 dB
+            const stickyPoint = -20;
+            const stickyThreshold = 1.5;
+
+            if (Math.abs(value - stickyPoint) < stickyThreshold) {
+                value = stickyPoint;
+                slider.value = value;
+            }
+
+            document.getElementById('volumeValue').textContent = value.toFixed(1);
+            updateSliderFill(value);
+        }
+
+        // Increase volume by 1 dB
+        function increaseVolume() {
+            const slider = document.getElementById('volumeSlider');
+            let value = parseFloat(slider.value);
+            value = Math.min(0, value + 1);
+            slider.value = value;
+            document.getElementById('volumeValue').textContent = value.toFixed(1);
+            updateSliderFill(value);
+            setVolume();
+        }
+
+        // Decrease volume by 1 dB
+        function decreaseVolume() {
+            const slider = document.getElementById('volumeSlider');
+            let value = parseFloat(slider.value);
+            value = Math.max(-60, value - 1);
+            slider.value = value;
+            document.getElementById('volumeValue').textContent = value.toFixed(1);
+            updateSliderFill(value);
+            setVolume();
+        }
+
+        // Set volume to reference level (-20 dB)
+        function setVolumeToReference() {
+            const slider = document.getElementById('volumeSlider');
+            slider.value = -20;
+            document.getElementById('volumeValue').textContent = '-20.0';
+            updateSliderFill(-20);
+            setVolume();
+        }
+
+        // Toggle power
+        async function togglePower() {
+            if (!currentStatus) return;
+
+            if (currentStatus.power) {
+                await sendCommand('power/off', null, 1500);
+            } else {
+                await sendCommand('power/on', null, 1500);
+            }
+        }
+
+        // Send volume command
+        async function setVolume() {
+            const db = parseFloat(document.getElementById('volumeSlider').value);
+            await sendCommand('volume', { db });
+        }
+
+        // Toggle mute
+        async function toggleMute() {
+            await sendCommand('mute/toggle');
+        }
+
+        // Set channel
+        async function setChannel(channel) {
+            await sendCommand('channel', { channel });
+        }
+
+        // Generic command sender
+        async function sendCommand(endpoint, body = null, refreshDelay = 500) {
+            try {
+                const options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(`/api/${endpoint}`, options);
+                const result = await response.json();
+
+                // Silently ignore API errors - don't show to user
+
+                // Refresh status after command (longer delay for power commands)
+                setTimeout(updateStatus, refreshDelay);
+            } catch (error) {
+                // Only show connection errors
+                showError('Failed to connect to server');
+            }
+        }
+
+        // Error handling
+        function showError(message) {
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function hideError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

@@ -41,7 +41,7 @@ python3 devialet_web_server.py
 #    http://<your-server-ip>:5000
 ```
 
-![screenshot](der_screenshot.png)
+<img src="der_screenshot.png" width="200">
 
 ## Files
 

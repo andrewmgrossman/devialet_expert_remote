@@ -1,6 +1,6 @@
 # Devialet Expert Pro Web Server Setup
 
-This guide will help you set up the web server on your Mac Mini to control your Devialet Expert Pro from your iPhone.
+This guide will help you set up the web server to control your Devialet Expert Pro from your phone.
 
 ## Quick Start
 
@@ -21,18 +21,18 @@ python3 devialet_web_server.py
 python3 devialet_web_server.py --ip 192.168.1.100
 ```
 
-The server will start on `http://0.0.0.0:5000` (accessible from any device on your network).
+The server will start on `http://<server-ip-address>:5000` (accessible from any device on your network).
 
-### 3. Access from iPhone
+### 3. Access from Phone
 
-1. Make sure your iPhone is on the same network as your Mac Mini
-2. Find your Mac Mini's IP address:
+1. Make sure your phone is on the same network as your server
+2. Find your server's IP address:
    ```bash
-   # On Mac Mini, run:
+   # On server, run:
    ifconfig | grep "inet " | grep -v 127.0.0.1
    ```
-3. Open Safari on your iPhone
-4. Go to: `http://<your-mac-mini-ip>:5000`
+3. Open the browser on your phone
+4. Go to: `http://<server-ip-address>:5000`
    - Example: `http://192.168.1.50:5000`
 
 ### 4. Add to iPhone Home Screen (Optional)
@@ -67,7 +67,7 @@ python3 devialet_web_server.py --debug
 
 ## Running the Server on Startup (macOS)
 
-To have the server start automatically when your Mac Mini boots:
+To have the server start automatically when your Mac boots:
 
 ### Option 1: Using launchd (Recommended)
 
@@ -244,7 +244,7 @@ curl -X POST http://192.168.1.50:5000/api/volume -H "Content-Type: application/j
 2. Create a new shortcut
 3. Add "Get Contents of URL" action
 4. Configure:
-   - URL: `http://<mac-mini-ip>:5000/api/power/on`
+   - URL: `http://<server-ip-address>:5000/api/power/on`
    - Method: POST
 5. Name it "Turn On Amp" and add to home screen
 
@@ -277,14 +277,14 @@ If you use Homebridge, you can create HTTP switch accessories:
 
 3. **Check network connectivity:**
    ```bash
-   # On iPhone, ping your Mac Mini
-   ping <mac-mini-ip>
+   # On iPhone, ping your server
+   ping <server-ip-address>
    ```
 
 4. **Verify port is accessible:**
    ```bash
    # On another device on network
-   telnet <mac-mini-ip> 5000
+   telnet <server-ip-address> 5000
    ```
 
 ### Server crashes or won't start
@@ -312,7 +312,7 @@ If you use Homebridge, you can create HTTP switch accessories:
    ```
 
 2. **Check network:**
-   - Amp and Mac Mini must be on same network
+   - Amp and server must be on same network
    - Check amp is powered on and connected to network
 
 3. **Test with control script:**
@@ -328,12 +328,7 @@ If you use Homebridge, you can create HTTP switch accessories:
 
 ## Security Notes
 
-Since you mentioned the Mac Mini is not accessible from outside your local network, no authentication has been implemented. However, if you ever expose this to the internet, consider:
-
-- Adding basic authentication
-- Using HTTPS/TLS
-- Implementing rate limiting
-- Restricting IP addresses
+No authentication has been implemented. Use at your own risk.
 
 ## Files Reference
 

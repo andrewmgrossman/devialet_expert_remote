@@ -38,7 +38,7 @@ pip3 install -r requirements.txt
 python3 devialet_web_server.py
 
 # 3. Open Safari on iPhone and go to:
-#    http://<your-mac-mini-ip>:5000
+#    http://<your-server-ip>:5000
 ```
 
 ## Files

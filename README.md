@@ -28,7 +28,7 @@ python3 devialet_expert_control.py volume -20
 python3 devialet_expert_control.py channel 1
 ```
 
-### iPhone/Browser Control
+### Phone/Browser Control
 
 ```bash
 # 1. Install dependencies
@@ -41,7 +41,7 @@ python3 devialet_web_server.py
 #    http://<your-server-ip>:5000
 ```
 
-<img src="der_screenshot.png" width="200">
+<img src="der_screenshot.png" width="225">
 
 ## Files
 

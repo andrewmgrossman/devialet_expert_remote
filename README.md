@@ -41,6 +41,8 @@ python3 devialet_web_server.py
 #    http://<your-server-ip>:5000
 ```
 
+![screenshot](der_screenshot.png)
+
 ## Files
 
 ### Core Control

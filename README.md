@@ -1,6 +1,6 @@
 # Devialet Expert Pro Network Control
 
-Complete solution for controlling Devialet Expert Pro amplifiers over the network, including iPhone/browser control.
+Complete solution for controlling Devialet Expert Pro amplifiers over the network, including iPhone/browser control. Developed for and tested with an Expert 440 Pro; may not work with single-chassis amps. About 95% vibe coded by Claude.
 
 ## Overview
 

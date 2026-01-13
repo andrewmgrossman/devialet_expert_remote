@@ -176,6 +176,11 @@ controller.set_channel(1)  # Phono
 3. **No push notifications** - Cannot receive immediate status updates
 4. **Local network only** - No internet/remote access built in
 
+## Known Bugs
+
+- CRC broken
+- Probably broken for single-chassis amps
+
 ## Credits
 
 - **Protocol reverse engineering:** Based on [gnulabis/devimote](https://github.com/gnulabis/devimote)

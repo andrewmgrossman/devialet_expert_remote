@@ -1,8 +1,8 @@
 # Devialet Expert Pro Network Control
 
-Complete solution for controlling Devialet Expert Pro amplifiers over the network, including iPhone/browser control. 
+Complete solution for controlling Devialet Expert Pro amplifiers over the network, including phone/browser control. 
 
-Developed for and tested with an Expert 440 Pro; may not work with single-chassis amps. About 95% vibe coded by Claude.
+Developed for and tested with an Expert 440 Pro; may not work with single-chassis amps. About 95% vibe coded by Claude Code.
 
 ## Overview
 
@@ -37,7 +37,7 @@ pip3 install -r requirements.txt
 # 2. Start web server
 python3 devialet_web_server.py
 
-# 3. Open Safari on iPhone and go to:
+# 3. Open browser on phone and go to:
 #    http://<your-server-ip>:5000
 ```
 
@@ -56,15 +56,13 @@ python3 devialet_web_server.py
 - **`WEB_SERVER_SETUP.md`** - Detailed setup guide for web server
 
 ### Testing & Documentation
-- **`test_phono_selection.py`** - Test script for Phono channel selection
-- **`PHONO_TESTING_GUIDE.md`** - Guide for testing Phono channel
 - **`README.md`** - This file
 
 ## Features
 
 ### Supported Commands
 - ✅ Power on/off/toggle
-- ✅ Volume control (-96 to 0 dB)
+- ✅ Volume control
 - ✅ Mute/unmute/toggle
 - ✅ Channel selection (including Phono via hardcoded bytes)
 - ✅ Status monitoring (power, volume, mute, channel)
@@ -72,7 +70,7 @@ python3 devialet_web_server.py
 ### Web Interface Features
 - 📱 Mobile-optimized, touch-friendly design
 - 🌓 Dark/light mode (follows system preference)
-- 🔄 Auto-refreshing status (every 2 seconds)
+- 🔄 Auto-refreshing status
 - 🎚️ Volume slider with real-time feedback
 - 🎛️ One-tap channel switching
 - ⚡ Fast and responsive
@@ -82,22 +80,6 @@ python3 devialet_web_server.py
 - 📡 CORS enabled for cross-origin requests
 - 🔍 Health check endpoint
 - 📊 Detailed status information
-
-## Protocol Details
-
-The Devialet Expert Pro uses a UDP-based binary protocol:
-- **Status port:** 45454 (broadcast from amp)
-- **Command port:** 45455 (unicast to amp)
-- **Packet size:** 598 bytes (status), 142 bytes (command)
-- **Discovery:** Passive listening to broadcast packets
-
-Key discoveries:
-- Volume encoding in byte 565
-- Mute + channel in byte 563
-- Phono requires hardcoded bytes `0x3F 0x80`
-- Non-linear channel mapping
-
-See `DEVIALET_EXPERT_PRO_API.md` for complete technical details.
 
 ## Requirements
 
@@ -199,4 +181,3 @@ This documentation and code is provided as-is for educational and personal use. 
 2. **Web server help:** `python3 devialet_web_server.py --help`
 3. **API documentation:** See `DEVIALET_EXPERT_PRO_API.md`
 4. **Web setup:** See `WEB_SERVER_SETUP.md`
-5. **Phono testing:** See `PHONO_TESTING_GUIDE.md`

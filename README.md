@@ -64,7 +64,7 @@ python3 devialet_web_server.py
 - ✅ Power on/off/toggle
 - ✅ Volume control
 - ✅ Mute/unmute/toggle
-- ✅ Channel selection (including Phono via hardcoded bytes)
+- ✅ Channel selection
 - ✅ Status monitoring (power, volume, mute, channel)
 
 ### Web Interface Features

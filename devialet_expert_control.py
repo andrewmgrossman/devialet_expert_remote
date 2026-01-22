@@ -224,9 +224,10 @@ class DevialetExpertController:
 
             # Send command 4 times (as per original implementation)
             for _ in range(4):
-                data[3] = self.packet_cnt
-                data[5] = self.packet_cnt >> 1
-                self.packet_cnt += 1
+                # Packet counter fields are single bytes; wrap to avoid ValueError.
+                data[3] = self.packet_cnt & 0xFF
+                data[5] = (self.packet_cnt >> 1) & 0xFF
+                self.packet_cnt = (self.packet_cnt + 1) & 0xFF
 
                 # Calculate and append CRC
                 crc = crc16(data[0:12])

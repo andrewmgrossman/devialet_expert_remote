@@ -569,7 +569,7 @@
 
                         <div class="control-row">
                             <button onclick="decreaseVolume()" class="control-button">◀︎</button>
-                            <button onclick="setVolumeToReference()" class="control-button small">-20</button>
+                            <button onclick="setVolumeToReference()" id="defaultVolumeButton" class="control-button small">-20</button>
                             <button onclick="increaseVolume()" class="control-button">▶︎</button>
                         </div>
 
@@ -615,11 +615,20 @@
     </div>
 
     <script>
+        // === USER CONFIGURATION ===
+        const DEFAULT_VOLUME_DB = -20;
+        // ==========================
+
         let currentStatus = null;
         let updateInterval = null;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Set tick mark position and button text based on DEFAULT_VOLUME_DB
+            const tickPercent = ((DEFAULT_VOLUME_DB + 60) / 60) * 100;
+            document.querySelector('.slider-reference').style.left = tickPercent + '%';
+            document.getElementById('defaultVolumeButton').textContent = DEFAULT_VOLUME_DB;
+
             updateStatus();
             // Auto-refresh every 1 second for more responsive updates
             updateInterval = setInterval(updateStatus, 1000);
@@ -770,13 +779,13 @@
             setChannel(channel);
         }
 
-        // Handle volume slider input with sticky behavior at -20 dB
+        // Handle volume slider input with sticky behavior at default volume
         function handleVolumeInput() {
             const slider = document.getElementById('volumeSlider');
             let value = parseFloat(slider.value);
 
-            // Sticky behavior: snap to -20 if within 1.5 dB
-            const stickyPoint = -20;
+            // Sticky behavior: snap to default volume if within 1.5 dB
+            const stickyPoint = DEFAULT_VOLUME_DB;
             const stickyThreshold = 1.5;
 
             if (Math.abs(value - stickyPoint) < stickyThreshold) {
@@ -810,12 +819,12 @@
             setVolume();
         }
 
-        // Set volume to reference level (-20 dB)
+        // Set volume to reference level
         function setVolumeToReference() {
             const slider = document.getElementById('volumeSlider');
-            slider.value = -20;
-            document.getElementById('volumeValue').textContent = '-20.0';
-            updateSliderFill(-20);
+            slider.value = DEFAULT_VOLUME_DB;
+            document.getElementById('volumeValue').textContent = DEFAULT_VOLUME_DB.toFixed(1);
+            updateSliderFill(DEFAULT_VOLUME_DB);
             setVolume();
         }
 

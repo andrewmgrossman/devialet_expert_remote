@@ -217,25 +217,25 @@ class DevialetExpertController:
             raise Exception("No IP address set. Run get_status() first to discover amplifier.")
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # Set packet header
+            data[0] = 0x44
+            data[1] = 0x72
 
-        # Set packet header
-        data[0] = 0x44
-        data[1] = 0x72
+            # Send command 4 times (as per original implementation)
+            for _ in range(4):
+                data[3] = self.packet_cnt
+                data[5] = self.packet_cnt >> 1
+                self.packet_cnt += 1
 
-        # Send command 4 times (as per original implementation)
-        for _ in range(4):
-            data[3] = self.packet_cnt
-            data[5] = self.packet_cnt >> 1
-            self.packet_cnt += 1
+                # Calculate and append CRC
+                crc = crc16(data[0:12])
+                data[12] = (crc & 0xff00) >> 8
+                data[13] = (crc & 0x00ff)
 
-            # Calculate and append CRC
-            crc = crc16(data[0:12])
-            data[12] = (crc & 0xff00) >> 8
-            data[13] = (crc & 0x00ff)
-
-            sock.sendto(data, (self.ip, self.UDP_PORT_CMD))
-
-        sock.close()
+                sock.sendto(data, (self.ip, self.UDP_PORT_CMD))
+        finally:
+            sock.close()
 
     def turn_on(self):
         """Turn on the amplifier (exit standby)."""

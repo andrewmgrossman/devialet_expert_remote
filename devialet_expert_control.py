@@ -17,15 +17,15 @@ IP ADDRESS CACHING:
     Use --no-cache to disable caching.
 
 Usage (auto-discovers amplifier):
-    python devialet_expert_control.py --status
-    python devialet_expert_control.py --on
-    python devialet_expert_control.py --off
-    python devialet_expert_control.py --volume -20
-    python devialet_expert_control.py --mute
-    python devialet_expert_control.py --unmute
+    python devialet_expert_control.py status
+    python devialet_expert_control.py on
+    python devialet_expert_control.py off
+    python devialet_expert_control.py volume -20
+    python devialet_expert_control.py mute
+    python devialet_expert_control.py unmute
 
 Or specify IP address:
-    python devialet_expert_control.py --ip 192.168.1.10 --on
+    python devialet_expert_control.py on --ip 192.168.1.10
 """
 
 import socket

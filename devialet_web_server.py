@@ -62,11 +62,11 @@ def get_status():
     ctrl = get_controller()
     status = ctrl.get_status()
 
-    # Add channel accessibility info
+    # Add channel info (all channels are now accessible with dynamic mapping)
     for ch_num in status['channels'].keys():
         status['channels'][ch_num] = {
             'name': status['channels'][ch_num],
-            'accessible': ch_num in DevialetExpertController.CHANNEL_COMMAND_MAP
+            'accessible': True
         }
 
     return status

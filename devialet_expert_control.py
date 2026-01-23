@@ -165,51 +165,46 @@ class DevialetExpertController:
 
     def _decode_status(self, data: bytes, ip: str) -> dict:
         """Decode status packet from amplifier."""
-        status = {}
-        status['ip'] = ip
-        status['device_name'] = data[19:50].decode('UTF-8').strip('\x00')
+        self.status = {}
+        self.status['ip'] = ip
+        self.status['device_name'] = data[19:50].decode('UTF-8').strip('\x00')
 
         # Decode available channels
-        status['channels'] = {}
+        self.status['channels'] = {}
         for i in range(15):
             enabled = int(chr(data[52 + i * 17]))
             if enabled:
-                status['channels'][i] = data[53 + i * 17:52 + (i + 1) * 17].decode('UTF-8').strip('\x00')
+                self.status['channels'][i] = data[53 + i * 17:52 + (i + 1) * 17].decode('UTF-8').strip('\x00')
 
         # Decode current state
         # Power status is in byte 562, bit 7 (discovered through packet analysis)
         # Note: Original documentation incorrectly stated byte 307
         if len(data) >= 563:
-            status['power'] = (data[562] & 0x80) != 0
+            self.status['power'] = (data[562] & 0x80) != 0
         else:
-            status['power'] = None
+            self.status['power'] = None
 
         # Channel and mute are both in byte 563 (in the extended part of the packet)
         if len(data) >= 564:
             # Byte 563 encoding:
             #   Bit 1 (0x02): Mute status
             #   Bits 2-7 (0xfc): Channel number (shifted right by 2)
-            status['muted'] = (data[563] & 0x02) != 0
-            status['channel'] = (data[563] & 0xfc) >> 2
+            self.status['muted'] = (data[563] & 0x02) != 0
+            self.status['channel'] = (data[563] & 0xfc) >> 2
         else:
-            status['muted'] = None
-            status['channel'] = None
+            self.status['muted'] = None
+            self.status['channel'] = None
 
         # Volume is in byte 565 (in the extended part of the packet beyond 512 bytes)
         # Formula discovered through packet analysis: dB = (byte_565 / 2.0) - 97.5
         if len(data) >= 566:
-            status['volume_raw'] = data[565]
-            status['volume_db'] = (data[565] / 2.0) - 97.5
+            self.status['volume_raw'] = data[565]
+            self.status['volume_db'] = (data[565] / 2.0) - 97.5
         else:
             # Packet truncated (shouldn't happen with 2048 byte buffer)
-            status['volume_db'] = None
+            self.status['volume_db'] = None
 
-        # Verify CRC
-        crc_received = struct.unpack('>H', data[-2:])[0]
-        crc_calculated = crc16(bytearray(data[:-2]))
-        status['crc_ok'] = (crc_received == crc_calculated)
-
-        return status
+        return self.status
 
     def _send_command(self, data: bytearray):
         """Send command packet to amplifier."""
@@ -320,19 +315,6 @@ class DevialetExpertController:
         data[9] = (volume & 0x00ff)
         self._send_command(data)
 
-    # Mapping from status channel number to command value
-    # Discovered through automated testing - Expert Pro has non-linear channel encoding
-    # Note: Phono uses hardcoded bytes discovered via Wireshark packet analysis
-    CHANNEL_COMMAND_MAP = {
-        0: -1,   # Optical 1 (commands -10 to -1 all work)
-        1: 'hardcoded',  # Phono - uses hardcoded bytes 0x3F 0x80 (Wireshark analysis)
-        2: 0,    # UPnP (commands 0-1 work)
-        3: 3,    # Roon Ready
-        4: 4,    # AirPlay
-        5: 5,    # Spotify
-        14: 14,  # Air (commands 9-20 work)
-    }
-
     def set_channel(self, channel: int):
         """
         Set input channel.
@@ -340,29 +322,48 @@ class DevialetExpertController:
         Args:
             channel: Status channel number (0-14) as shown in get_status()
 
-        Note: Phono (channel 1) uses hardcoded bytes discovered via Wireshark
-              packet analysis of the official Devialet app.
+        The channel list is dynamically read from the amplifier's status packet.
+        Channel command encoding follows a non-linear mapping discovered through
+        protocol analysis:
+            - Slot 0: negative command value (-1)
+            - Slot 1: hardcoded bytes 0x3F 0x80 (always, regardless of input type)
+            - Slot 2: command value 0
+            - Slot 3: command value 2
+            - Slots 4+: command value = slot number
         """
-        # Check if this channel has a known command mapping
-        if channel not in self.CHANNEL_COMMAND_MAP:
-            raise Exception(f"Channel {channel} is not accessible via network commands. "
-                          f"Accessible channels: {sorted(self.CHANNEL_COMMAND_MAP.keys())}")
+        # Ensure we have current status with channel information
+        if not self.status or 'channels' not in self.status:
+            self.get_status()
 
-        # Special handling for Phono - uses hardcoded bytes from Wireshark analysis
-        # The standard formula doesn't work for Phono; the official app sends 0x3F 0x80
+        # Check if channel exists
+        if channel not in self.status.get('channels', {}):
+            available = sorted(self.status.get('channels', {}).keys())
+            raise Exception(f"Channel {channel} not available. Available channels: {available}")
+
+        # Slot 1 always uses hardcoded bytes (0x3F 0x80), regardless of what input
+        # is configured there. This was discovered via Wireshark analysis.
         # Reference: https://github.com/gnulabis/devimote/issues/2
-        if channel == 1:  # Phono
+        if channel == 1:
             data = bytearray(142)
             data[6] = 0x00
             data[7] = 0x05  # Channel command
-            data[8] = 0x3F  # Hardcoded byte 8 for Phono
-            data[9] = 0x80  # Hardcoded byte 9 for Phono
+            data[8] = 0x3F  # Hardcoded byte 8 for slot 1
+            data[9] = 0x80  # Hardcoded byte 9 for slot 1
             self._send_command(data)
             return
 
-        # Standard channel selection for other inputs
-        cmd_value = self.CHANNEL_COMMAND_MAP[channel]
-        out_val = 0x4000 | (cmd_value << 5)
+        # Map status channel number to command value
+        # The mapping is non-linear for the first few slots
+        if channel == 0:
+            cmd_value = -1  # Slot 0 needs negative command
+        elif channel == 2:
+            cmd_value = 0   # Slot 2 uses cmd 0
+        elif channel == 3:
+            cmd_value = 2   # Slot 3 uses cmd 2
+        else:
+            cmd_value = channel  # Slots 4+ use direct mapping
+
+        out_val = 0x4000 | ((cmd_value & 0xFFFF) << 5)
 
         data = bytearray(142)
         data[6] = 0x00
@@ -473,9 +474,7 @@ Examples:
                 print(f"Available channels:")
                 for ch_num, ch_name in sorted(status['channels'].items()):
                     current_marker = " *" if ch_num == status['channel'] else ""
-                    accessible_marker = "" if ch_num in DevialetExpertController.CHANNEL_COMMAND_MAP else " (not network accessible)"
-                    print(f"  {ch_num}: {ch_name}{current_marker}{accessible_marker}")
-            print(f"CRC: {'OK' if status['crc_ok'] else 'ERROR'}")
+                    print(f"  {ch_num}: {ch_name}{current_marker}")
 
         elif args.command == 'on':
             controller.turn_on()

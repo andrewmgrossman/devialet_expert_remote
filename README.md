@@ -2,7 +2,7 @@
 
 Complete solution for controlling Devialet Expert Pro amplifiers over the network, including phone/browser control. 
 
-Developed for and tested with an Expert 440 Pro; may not work with single-chassis amps. About 95% vibe coded by Claude Code.
+Developed for and tested with an Expert 440 Pro; seems to work with single-chassis amps. About 95% vibe coded by Claude Code.
 
 ## Overview
 
@@ -155,15 +155,14 @@ controller.set_channel(1)  # Phono
 
 ## Known Limitations
 
-1. **No authentication** - UDP protocol has no security/authentication
+1. **No authentication** - Accessible by anyone on your network
 2. **~1 second status latency** - Amp broadcasts status once per second
 3. **No push notifications** - Cannot receive immediate status updates
 4. **Local network only** - No internet/remote access built in
 
 ## Known Bugs
 
-- CRC broken
-- Probably broken for single-chassis amps
+- None currently
 
 ## Credits
 
